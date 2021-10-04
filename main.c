@@ -107,7 +107,11 @@ noArvore *fazerArvore(unsigned *lista)
 {
     lista list = {0; NULL}; //inicio e tamanho
 
+    for(int i = 0; i < 256; i++)
+    {
+        insereNoLista()
 
+    }
 }
 
 void descompactar()
