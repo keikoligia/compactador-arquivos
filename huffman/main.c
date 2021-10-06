@@ -142,7 +142,35 @@ void excluirArvore(noArvore *no)
         free(no);
     }
 }
+bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
+{
+    if (!(no->esq || no->dir) && no->c == c)
+    {
+        buffer[tam] = '\0';
+        return true;
+    }
+    else
+    {
+        bool codEncontrado = false;
 
+        if (no->esq)
+        {
+            buffer[tam] = '0';
+            codEncontrado = buscaCodigoByte(no->esq, c, buffer, tam + 1);
+        }
+
+        if (!codEncontrado && no->dir)
+        {
+            buffer[tam] = '1';
+            codEncontrado = buscaCodigoByte(no->dir, c, buffer, tam + 1);
+        }
+
+        if (!codEncontrado)
+            buffer[tam] = '\0';
+
+        return codEncontrado;
+    }
+}
 void descompactar()
 {
     FILE *arqComp;
@@ -193,4 +221,112 @@ void descompactar()
 
     fclose(arqComp);
     fclose(arqDesc);
+}
+
+void compactar()
+{
+    FILE *arqComp;
+    FILE *arqDesc;
+    char nomeArqComp[20];
+    char nomeArqDesc[20];
+    unsigned lBytes[256] = {0};
+    unsigned char c;
+    unsigned tamanho = 0;
+    unsigned char aux = 0;
+
+    printf("Digite o nome do arquivo a ser compactado: \n");
+    scanf("%s", nomeArqComp);
+    arqComp = fopen(nomeArqComp, "rb");
+
+    if (arqComp == NULL)
+        printf("Arquivo não encontrado!");
+
+    printf("Digite o nome do arquivo que guardará a compactação: \n");
+    scanf("%s", nomeArqDesc);
+    arqDesc = fopen(nomeArqDesc, "wb");
+
+    if (arqDesc == NULL)
+        printf("Por favor digite corretamente o nome do arquivo!");
+
+    obterFreqByte(arqComp, lBytes);
+
+    noArvore *arvore = fazerArvore(lBytes);
+
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqDesc);
+    fseek(arqDesc, sizeof(unsigned int), SEEK_CUR);
+
+    while (fread(&c, 1, 1, arqComp) >= 1)
+    {
+        char buffer[1024] = {0};
+
+        buscaCodigoByte(arvore, c, buffer, 0);
+
+        for (char *i = buffer; *i; i++)
+        {
+            if (*i == '1')
+            {
+                aux = aux | (1 << (tamanho % 8));
+            }
+            tamanho++;
+
+            if (tamanho % 8 == 0)
+            {
+                fwrite(&aux, 1, 1, arqComp);
+                aux = 0;
+            }
+        }
+    }
+
+    fwrite(&aux, 1, 1, arqDesc);
+    fseek(arqDesc, 256 * sizeof(unsigned int), SEEK_SET);
+    fwrite(&tamanho, 1, sizeof(unsigned), arqDesc);
+
+    fseek(arqDesc, 0L, SEEK_END);
+    double tamanhoDesc = ftell(arqDesc);
+
+    fseek(arqComp, 0L, SEEK_END);
+    double tamanhoComp = ftell(arqComp);
+
+    printf("\nArquivo de entrada (descompactado): %s (%g bytes)\nArquivo de saida (compactado): %s (%g bytes)", nomeArqDesc, tamanhoDesc / 1000, nomeArqComp, tamanhoComp / 1000);
+
+    excluirArvore(arvore);
+
+    fclose(arqComp);
+    fclose(arqDesc);
+
+}
+int escolherOpcao()
+{
+    printf("O que deseja fazer? \n");
+
+    printf("Digite [1] para compactar um arquivo \n");
+    printf("Digite [2] para descompactar um arquivo \n");
+    printf("Digite [3] para sair do programa \n");
+
+    char opcao;
+    scanf("%c", &opcao);
+
+    switch (opcao)
+    {
+        case '1':
+            compactar();
+            break;
+
+        case '2':
+            descompactar();
+            break;
+
+        case '3':
+            break;
+        default:
+            printf("Valor de operacao invalido\n");
+            break;
+    }
+    return 0;
+}
+
+int main()
+{
+    escolherOpcao();
+    return 0;
 }
