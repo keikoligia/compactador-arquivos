@@ -114,6 +114,36 @@ noArvore *fazerArvore(unsigned *lista)
     }
 }
 
+int escolherOpcao()
+{
+    printf("O que deseja fazer? \n");
+
+    printf("Digite [1] para compactar um arquivo \n");
+    printf("Digite [2] para descompactar um arquivo \n");     
+    printf("Digite [3] para sair do programa \n");
+
+    char opcao;
+    scanf("%c", &opcao);
+
+    switch (opcao)
+    {
+    case 1:
+        compactar();
+        break;
+    
+    case 2: 
+        descompactar();
+        break;
+
+    case 3:
+        break;
+
+    default:
+        printf("Digite um valor válido por favor! \n\n");
+    }
+
+    return 0;
+}
 void descompactar()
 {
     FILE *arqComp;
