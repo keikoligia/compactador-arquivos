@@ -226,37 +226,37 @@ void descompactar()
 
 void compactar()
 {
+    FILE *arqParaComp;
     FILE *arqComp;
-    FILE *arqDesc;
+    char nomeArqParaComp[20];
     char nomeArqComp[20];
-    char nomeArqDesc[20];
     unsigned lBytes[256] = {0};
     unsigned char c;
     unsigned tamanho = 0;
     unsigned char aux = 0;
 
     printf("Digite o nome do arquivo a ser compactado: \n");
-    scanf("%s", nomeArqComp);
-    arqComp = fopen(nomeArqComp, "rb");
+    scanf("%s", nomeArqParaComp);
+    arqParaComp = fopen(nomeArqParaComp, "rb");
 
-    if (arqComp == NULL)
+    if (arqParaComp == NULL)
         printf("Arquivo não encontrado!");
 
     printf("Digite o nome do arquivo que guardará a compactação: \n");
-    scanf("%s", nomeArqDesc);
-    arqDesc = fopen(nomeArqDesc, "wb");
+    scanf("%s", nomeArqComp);
+    arqComp = fopen(nomeArqComp, "wb");
 
-    if (arqDesc == NULL)
+    if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    obterFreqByte(arqComp, lBytes);
+    obterFreqByte(arqParaComp, lBytes);
 
     noArvore *arvore = fazerArvore(lBytes);
 
-    fwrite(lBytes, 256, sizeof(lBytes[0]), arqDesc);
-    fseek(arqDesc, sizeof(unsigned int), SEEK_CUR);
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
 
-    while (fread(&c, 1, 1, arqComp) >= 1)
+    while (fread(&c, 1, 1, arqParaComp) >= 1)
     {
         char buffer[1024] = {0};
 
@@ -272,28 +272,28 @@ void compactar()
 
             if (tamanho % 8 == 0)
             {
-                fwrite(&aux, 1, 1, arqComp);
+                fwrite(&aux, 1, 1, arqParaComp);
                 aux = 0;
             }
         }
     }
 
-    fwrite(&aux, 1, 1, arqDesc);
-    fseek(arqDesc, 256 * sizeof(unsigned int), SEEK_SET);
-    fwrite(&tamanho, 1, sizeof(unsigned), arqDesc);
-
-    fseek(arqDesc, 0L, SEEK_END);
-    double tamanhoDesc = ftell(arqDesc);
+    fwrite(&aux, 1, 1, arqComp);
+    fseek(arqComp, 256 * sizeof(unsigned int), SEEK_SET);
+    fwrite(&tamanho, 1, sizeof(unsigned), arqComp);
 
     fseek(arqComp, 0L, SEEK_END);
     double tamanhoComp = ftell(arqComp);
 
-    printf("\nArquivo de entrada (descompactado): %s (%g bytes)\nArquivo de saida (compactado): %s (%g bytes)", nomeArqDesc, tamanhoDesc / 1000, nomeArqComp, tamanhoComp / 1000);
+    fseek(arqParaComp, 0L, SEEK_END);
+    double tamanhoParaComp = ftell(arqParaComp);
+
+    printf("\nArquivo de entrada (descompactado): %s (%g bytes)\nArquivo de saida (compactado): %s (%g bytes)", nomeArqParaComp, tamanhoParaComp / 1000, nomeArqComp, tamanhoComp / 1000);
 
     excluirArvore(arvore);
 
+    fclose(arqParaComp);
     fclose(arqComp);
-    fclose(arqDesc);
 
 }
 int escolherOpcao()
