@@ -65,6 +65,7 @@ noFila *insereNoFila(noFila *n, fila *fil)
     else
         if(n->no->freq < fil->inicio->no->freq)
         {
+            printf("entrou");
             n->prox = fil->inicio;
             fil->inicio = n;
         }
