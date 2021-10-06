@@ -4,23 +4,24 @@
 #include <stdbool.h>
 #include <math.h>
 
-typedef struct noArvore{
-struct noArvore *dir;
-struct noArvore *esq;
-byte b;
-int freq;
+typedef struct noArvore
+{
+    int freq;
+    unsigned char c;
+    struct noArvore *esq;
+    struct noArvore *dir;
 } noArvore;
 
-typedef struct noFila{
-noArvore *no;
-struct noFila *prox;
+typedef struct noFila
+{
+    noArvore *no;
+    struct noFila *prox;
+} noFila;
 
-}noFila;
-
-typedef struct fila{
-noFila *inicio;
-byte tamanho;
-int qtd;
+typedef struct fila
+{
+    noFila *inicio;
+    int qtd;
 } fila;
 
 noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
@@ -47,17 +48,17 @@ noFila *novoNoFila(noArvore *noArv)
     return novo;
 }
 
-int geraBit(FILE *entrada, int posicao, byte *aux )
+int gerarBit(FILE *arq, int pos, unsigned char *aux)
 {
-    if(posicao % 8 == 0)
+    if(pos % 8 == 0)
     {
-        fread(aux, 1, 1, entrada);
+        fread(aux, 1, 1, arq);
     }
 
-    return !!((*aux) & (1 << (posicao % 8)));
+    return !!((*aux) & (1 << (pos % 8)));
 }
 
-noLista *insereNoFila(noFila *n, fila *fil)
+noFila *insereNoFila(noFila *n, fila *fil)
 {
     if (!fil->inicio)
         fil->inicio = n; //primeira pos da fila recebe o argum
@@ -95,7 +96,7 @@ void obterFreqByte(FILE *arq, unsigned int *fila)
     rewind(arq);
 }
 
-noArvore criaSubArvore(fila fla)
+noArvore *criaSubArvore(fila *fla)
 {
     noFila *noFila = fla->inicio;
     noArvore *noArv = noFila->no;
@@ -112,64 +113,63 @@ noArvore criaSubArvore(fila fla)
 
 noArvore *fazerArvore(unsigned *f)
 {
-    fila fil = {0; NULL};
+    fila fil = {0, NULL};
 
     for(int i = 0; i < 256; i++)//percorre o vetor de bytes para criar a arvore com o nodos
     {
-      if(fil[i]) //se o byte existe:
+      if(f[i]) //se o byte existe:
         {
-            insereNoFila(novoNoFila(novoNoArv(i, f[i], NULL, NULL)));
+            insereNoFila(novoNoFila(novoNoArv(i, f[i], NULL, NULL)), &f);
         }
     }
 
-    while(fil.qtdtamanho > 1)
+    while(fil.qtd > 1)
     {
-        criaSubArvore(&fil);
-
-        noArvore *direito = noArv;
-        noArvore *esquerdo = noArv;
+        noArvore *direito = criaSubArvore(&fil);
+        noArvore *esquerdo = criaSubArvore(&fil);
         noArvore *soma = novoNoArv('#', esquerdo->freq + direito->freq, esquerdo, direito);
-        insereNoFila(novoNoFila(soma), &fla);
+        insereNoFila(novoNoFila(soma), &fil);
     }
-    return criaSubArvore(&l);
+    return criaSubArvore(&f);
 }
 
 void excluirArvore(noArvore *no)
 {
-    if(!no)
-
-
-}
-
-int escolherOpcao()
-{
-    printf("O que deseja fazer? \n");
-
-    printf("Digite [1] para compactar um arquivo \n");
-    printf("Digite [2] para descompactar um arquivo \n");     
-    printf("Digite [3] para sair do programa \n");
-
-    char opcao;
-    scanf("%c", &opcao);
-
-    switch (opcao)
+    while(!no)
     {
-    case 1:
-        compactar();
-        break;
-    
-    case 2: 
-        descompactar();
-        break;
-
-    case 3:
-        break;
-
-    default:
-        printf("Digite um valor válido por favor! \n\n");
+        noArvore *esquerda = no->esq;
+        noArvore *direita = no->dir;
+        free(no);
     }
+}
+bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
+{
+    if (!(no->esq || no->dir) && no->c == c)
+    {
+        buffer[tam] = '\0';
+        return true;
+    }
+    else
+    {
+        bool codEncontrado = false;
 
-    return 0;
+        if (no->esq)
+        {
+            buffer[tam] = '0';
+            codEncontrado = buscaCodigoByte(no->esq, c, buffer, tam + 1);
+        }
+
+        if (!codEncontrado && no->dir)
+        {
+            buffer[tam] = '1';
+            codEncontrado = buscaCodigoByte(no->dir, c, buffer, tam + 1);
+        }
+
+        if (!codEncontrado)
+            buffer[tam] = '\0';
+
+        return codEncontrado;
+    }
 }
 void descompactar()
 {
@@ -186,30 +186,30 @@ void descompactar()
     scanf("%s", nomeArqComp);
 
     if (arqComp == NULL)
-        printf("Arquivo n�o encontrado!");
+        printf("Arquivo não encontrado!");
 
-    print("Digite o nome do arquivo que guardar� a compacta��o: \n");
+    printf("Digite o nome do arquivo que guardará a compactação: \n");
     scanf("%s", nomeArqDesc);
 
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(lBytes[0]), arqComp)
-    noArvore *root = fazerArvore(*lBytes);
+    fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    noArvore *arvore = fazerArvore(*lBytes);
 
-    fread(&tamanho, 1, sizeof(tamanho), arqLer);
+    fread(&tamanho, 1, sizeof(tamanho), arqComp);
 
     while (posicao < tamanho)
     {
-        noArvore *noAtual = root;
+        noArvore *noAtual = arvore;
 
         while (noAtual->esq || noAtual->dir)
-            noAtual = geraBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
+            noAtual = gerarBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
 
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
 
-    fseek(arqLer, 0L, SEEK_END);
+    fseek(arqComp, 0L, SEEK_END);
     double tamanhoComp = ftell(arqComp);
 
     fseek(arqDesc, 0L, SEEK_END);
@@ -217,7 +217,7 @@ void descompactar()
 
     printf("Arquivo de entrada: %s (%g bytes)\nArquivo de saida: %s (%g bytes)", nomeArqComp, tamanhoComp / 1000, nomeArqDesc, tamanhoDesc/ 1000);
 
-    excluiArvore(raiz);
+    excluirArvore(arvore);
 
     fclose(arqComp);
     fclose(arqDesc);
@@ -225,24 +225,105 @@ void descompactar()
 
 void compactar()
 {
-    FILE *arqDesc;
     FILE *arqComp;
-    char nomeArqDesc[20];
+    FILE *arqDesc;
     char nomeArqComp[20];
-    unsigned lBytes[256] ={0};
+    char nomeArqDesc[20];
+    unsigned lBytes[256] = {0};
+    unsigned char c;
+    unsigned tamanho = 0;
+    unsigned char aux = 0;
 
     printf("Digite o nome do arquivo a ser compactado: \n");
     scanf("%s", nomeArqDesc);
 
     if (arqDesc == NULL)
-        printf("Arquivo n�o encontrado!");
+        printf("Arquivo não encontrado!");
 
-    print("Digite o nome do arquivo que guardar� a compacta��o: \n");
+    printf("Digite o nome do arquivo que guardará a compactação: \n");
     scanf("%s", nomeArqComp);
 
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp)
-    fazerArvore(*lBytes);
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    noArvore *arvore = fazerArvore(*lBytes);
+
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
+
+    while (fread(&c, 1, 1, arqDesc) >= 1)
+    {
+        char buffer[1024] = {0};
+
+        buscaCodigoByte(arvore, c, buffer, 0);
+
+        for (char *i = buffer; *i; i++)
+        {
+            if (*i == '1')
+            {
+                aux = aux | (1 << (tamanho % 8));
+            }
+            tamanho++;
+
+            if (tamanho % 8 == 0)
+            {
+                fwrite(&aux, 1, 1, arqComp);
+                aux = 0;
+            }
+        }
+    }
+
+    fwrite(&aux, 1, 1, arqComp);
+    fseek(arqComp, 256 * sizeof(unsigned int), SEEK_SET);
+    fwrite(&tamanho, 1, sizeof(unsigned), arqComp);
+
+    fseek(arqDesc, 0L, SEEK_END);
+    double tamanhoDesc = ftell(arqDesc);
+
+    fseek(arqComp, 0L, SEEK_END);
+    double tamanhoComp = ftell(arqComp);
+
+    printf("\nArquivo de entrada (descompactado): %s (%g bytes)\nArquivo de saida (compactado): %s (%g bytes)", nomeArqDesc, tamanhoDesc / 1000, nomeArqComp, tamanhoComp / 1000);
+
+    excluirArvore(arvore);
+
+    fclose(arqComp);
+    fclose(arqDesc);
+
+}
+int escolherOpcao()
+{
+    printf("O que deseja fazer? \n");
+
+    printf("Digite [1] para compactar um arquivo \n");
+    printf("Digite [2] para descompactar um arquivo \n");
+    printf("Digite [3] para sair do programa \n");
+
+    char opcao;
+    scanf("%c", &opcao);
+
+    switch (opcao)
+    {
+        case '1':
+            //compactar();
+            break;
+
+        case '2':
+            descompactar();
+            break;
+
+        case '3':
+            break;
+        default:
+            printf("Valor de operacao invalido\n");
+            break;
+    }
+    return 0;
+}
+
+int main()
+{
+    escolherOpcao();
+    return 0;
 }
