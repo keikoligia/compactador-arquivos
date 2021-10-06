@@ -1,0 +1,9 @@
+# depslib dependency file v1.0
+1633475753 source:e:\usuarios\lk\desktop\cotuca\técnico\compactador-arquivos\huffman\main.c
+	<stdio.h>
+	<stdlib.h>
+	<time.h>
+	<string.h>
+	<math.h>
+	<stdbool.h>
+

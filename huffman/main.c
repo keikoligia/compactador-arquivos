@@ -4,23 +4,24 @@
 #include <stdbool.h>
 #include <math.h>
 
-typedef struct noArvore{
-struct noArvore *dir;
-struct noArvore *esq;
-byte b;
-int freq;
+typedef struct noArvore
+{
+    int freq;
+    unsigned char c;
+    struct noArvore *esq;
+    struct noArvore *dir;
 } noArvore;
 
-typedef struct noFila{
-noArvore *no;
-struct noFila *prox;
+typedef struct noFila
+{
+    noArvore *no;
+    struct noFila *prox;
+} noFila;
 
-}noFila;
-
-typedef struct fila{
-noFila *inicio;
-byte tamanho;
-int qtd;
+typedef struct fila
+{
+    noFila *inicio;
+    int qtd;
 } fila;
 
 noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
@@ -47,17 +48,17 @@ noFila *novoNoFila(noArvore *noArv)
     return novo;
 }
 
-int geraBit(FILE *entrada, int posicao, byte *aux )
+int gerarBit(FILE *arq, int pos, unsigned char *aux)
 {
-    if(posicao % 8 == 0)
+    if(pos % 8 == 0)
     {
-        fread(aux, 1, 1, entrada);
+        fread(aux, 1, 1, arq);
     }
 
-    return !!((*aux) & (1 << (posicao % 8)));
+    return !!((*aux) & (1 << (pos % 8)));
 }
 
-noLista *insereNoFila(noFila *n, fila *fil)
+noFila *insereNoFila(noFila *n, fila *fil)
 {
     if (!fil->inicio)
         fil->inicio = n; //primeira pos da fila recebe o argum
@@ -95,7 +96,7 @@ void obterFreqByte(FILE *arq, unsigned int *fila)
     rewind(arq);
 }
 
-noArvore criaSubArvore(fila fla)
+noArvore *criaSubArvore(fila *fla)
 {
     noFila *noFila = fla->inicio;
     noArvore *noArv = noFila->no;
@@ -112,33 +113,34 @@ noArvore criaSubArvore(fila fla)
 
 noArvore *fazerArvore(unsigned *f)
 {
-    fila fil = {0; NULL};
+    fila fil = {0, NULL};
 
     for(int i = 0; i < 256; i++)//percorre o vetor de bytes para criar a arvore com o nodos
     {
-      if(fil[i]) //se o byte existe:
+      if(f[i]) //se o byte existe:
         {
-            insereNoFila(novoNoFila(novoNoArv(i, f[i], NULL, NULL)));
+            insereNoFila(novoNoFila(novoNoArv(i, f[i], NULL, NULL)), &f);
         }
     }
 
-    while(fil.qtdtamanho > 1)
+    while(fil.qtd > 1)
     {
-        criaSubArvore(&fil);
-
-        noArvore *direito = noArv;
-        noArvore *esquerdo = noArv;
+        noArvore *direito = criaSubArvore(&fil);
+        noArvore *esquerdo = criaSubArvore(&fil);
         noArvore *soma = novoNoArv('#', esquerdo->freq + direito->freq, esquerdo, direito);
-        insereNoFila(novoNoFila(soma), &fla);
+        insereNoFila(novoNoFila(soma), &fil);
     }
-    return criaSubArvore(&l);
+    return criaSubArvore(&f);
 }
 
 void excluirArvore(noArvore *no)
 {
-    if(!no)
-
-
+    while(!no)
+    {
+        noArvore *esquerda = no->esq;
+        noArvore *direita = no->dir;
+        free(no);
+    }
 }
 
 void descompactar()
@@ -156,30 +158,30 @@ void descompactar()
     scanf("%s", nomeArqComp);
 
     if (arqComp == NULL)
-        printf("Arquivo n„o encontrado!");
+        printf("Arquivo n√£o encontrado!");
 
-    print("Digite o nome do arquivo que guardar· a compactaÁ„o: \n");
+    printf("Digite o nome do arquivo que guardar√° a compacta√ß√£o: \n");
     scanf("%s", nomeArqDesc);
 
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(lBytes[0]), arqComp)
-    noArvore *root = fazerArvore(*lBytes);
+    fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    noArvore *arvore = fazerArvore(*lBytes);
 
-    fread(&tamanho, 1, sizeof(tamanho), arqLer);
+    fread(&tamanho, 1, sizeof(tamanho), arqComp);
 
     while (posicao < tamanho)
     {
-        noArvore *noAtual = root;
+        noArvore *noAtual = arvore;
 
         while (noAtual->esq || noAtual->dir)
-            noAtual = geraBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
+            noAtual = gerarBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
 
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
 
-    fseek(arqLer, 0L, SEEK_END);
+    fseek(arqComp, 0L, SEEK_END);
     double tamanhoComp = ftell(arqComp);
 
     fseek(arqDesc, 0L, SEEK_END);
@@ -187,7 +189,7 @@ void descompactar()
 
     printf("Arquivo de entrada: %s (%g bytes)\nArquivo de saida: %s (%g bytes)", nomeArqComp, tamanhoComp / 1000, nomeArqDesc, tamanhoDesc/ 1000);
 
-    excluiArvore(raiz);
+    excluirArvore(arvore);
 
     fclose(arqComp);
     fclose(arqDesc);
