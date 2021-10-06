@@ -141,6 +141,36 @@ void excluirArvore(noArvore *no)
 
 }
 
+int escolherOpcao()
+{
+    printf("O que deseja fazer? \n");
+
+    printf("Digite [1] para compactar um arquivo \n");
+    printf("Digite [2] para descompactar um arquivo \n");     
+    printf("Digite [3] para sair do programa \n");
+
+    char opcao;
+    scanf("%c", &opcao);
+
+    switch (opcao)
+    {
+    case 1:
+        compactar();
+        break;
+    
+    case 2: 
+        descompactar();
+        break;
+
+    case 3:
+        break;
+
+    default:
+        printf("Digite um valor vÃ¡lido por favor! \n\n");
+    }
+
+    return 0;
+}
 void descompactar()
 {
     FILE *arqComp;
@@ -156,9 +186,9 @@ void descompactar()
     scanf("%s", nomeArqComp);
 
     if (arqComp == NULL)
-        printf("Arquivo não encontrado!");
+        printf("Arquivo nï¿½o encontrado!");
 
-    print("Digite o nome do arquivo que guardará a compactação: \n");
+    print("Digite o nome do arquivo que guardarï¿½ a compactaï¿½ï¿½o: \n");
     scanf("%s", nomeArqDesc);
 
     if (arqComp == NULL)
@@ -191,4 +221,28 @@ void descompactar()
 
     fclose(arqComp);
     fclose(arqDesc);
+}
+
+void compactar()
+{
+    FILE *arqDesc;
+    FILE *arqComp;
+    char nomeArqDesc[20];
+    char nomeArqComp[20];
+    unsigned lBytes[256] ={0};
+
+    printf("Digite o nome do arquivo a ser compactado: \n");
+    scanf("%s", nomeArqDesc);
+
+    if (arqDesc == NULL)
+        printf("Arquivo nï¿½o encontrado!");
+
+    print("Digite o nome do arquivo que guardarï¿½ a compactaï¿½ï¿½o: \n");
+    scanf("%s", nomeArqComp);
+
+    if (arqComp == NULL)
+        printf("Por favor digite corretamente o nome do arquivo!");
+
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp)
+    fazerArvore(*lBytes);
 }
