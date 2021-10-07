@@ -1,8 +1,0 @@
-# depslib dependency file v1.0
-1633523726 source:e:\usuarios\lk\desktop\cotuca\técnico\compactador-arquivos\teste\main.c
-	<stdio.h>
-	<stdlib.h>
-	<string.h>
-	<stdbool.h>
-	<math.h>
-

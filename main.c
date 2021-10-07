@@ -27,7 +27,8 @@ typedef struct fila
 noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
 {
     noArvore *novo;
-    if ((novo = malloc(sizeof(*novo))) == NULL)return NULL;
+    if ((novo = malloc(sizeof(*novo))) == NULL)
+        return NULL;
 
     novo->c = c;
     novo->freq = freq;
@@ -40,7 +41,8 @@ noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
 noFila *novoNoFila(noArvore *noArv)
 {
     noFila *novo;
-    if ((novo = malloc(sizeof(*novo))) == NULL) return NULL;
+    if ((novo = malloc(sizeof(*novo))) == NULL) 
+        return NULL;
 
     novo->no = noArv;
     novo->prox = NULL;
@@ -58,21 +60,20 @@ int gerarBit(FILE *arq, int pos, unsigned char *aux)
     return !!((*aux) & (1 << (pos % 8)));
 }
 
-noFila *insereNoFila(noFila *n, fila *fil)
+void insereNoFila(noFila *n, fila *f)
 {
-    if (!fil->inicio)
-        fil->inicio = n; //primeira pos da fila recebe o argum
-    else
-        if(n->no->freq < fil->inicio->no->freq)
-        {
-            printf("entrou");
-            n->prox = fil->inicio;
-            fil->inicio = n;
-        }
+    if (!f->inicio)
+        f->inicio = n;
+
+    else if (n->no->freq < f->inicio->no->freq)
+    {
+        n->prox = f->inicio;
+        f->inicio = n;
+    }
     else
     {
-        noFila *aux = fil->inicio->prox;
-        noFila *aux2 = fil->inicio;
+        noFila *aux = f->inicio->prox;
+        noFila *aux2 = f->inicio;
 
         while (aux && aux->no->freq <= n->no->freq)
         {
@@ -84,15 +85,15 @@ noFila *insereNoFila(noFila *n, fila *fil)
         n->prox = aux;
     }
 
-    fil->qtd++;
+    f->qtd++;
 }
 
 void obterFreqByte(FILE *arq, unsigned int *fila)
 {
-    unsigned char ch;
+    unsigned char c;
 
-    while (fread(&ch, sizeof(unsigned char), 1, arq))
-        fila[(unsigned char)ch]++;
+    while (fread(&c, 1, 1, arq))
+        fila[(unsigned char)c]++;
 
     rewind(arq);
 }
@@ -112,25 +113,24 @@ noArvore *criaSubArvore(fila *fla)
     return noArv;
 }
 
-noArvore *fazerArvore(unsigned *f)
+noArvore *fazerArvore(unsigned *fla)
 {
-    fila fil = {0, NULL};
+    fila f = {NULL, 0};
 
-    for(int i = 0; i < 256; i++)//percorre o vetor de bytes para criar a arvore com o nodos
+    for (int i = 0; i < 256; i++)
+        if (fla[i])
+            insereNoFila(novoNoFila(novoNoArv(i, fla[i], NULL, NULL)), &f);
+
+    while (f.qtd > 1)
     {
-      if(f[i]) //se o byte existe:
-        {
-            insereNoFila(novoNoFila(novoNoArv(i, f[i], NULL, NULL)), &f);
-        }
+        noArvore *noEsq = criaSubArvore(&f);
+        noArvore *noDir = criaSubArvore(&f);
+
+        noArvore *soma = novoNoArv('#', noEsq->freq + noDir->freq, noEsq, noDir);
+
+        insereNoFila(novoNoFila(soma), &f);
     }
 
-    while(fil.qtd > 1)
-    {
-        noArvore *direito = criaSubArvore(&fil);
-        noArvore *esquerdo = criaSubArvore(&fil);
-        noArvore *soma = novoNoArv('#', esquerdo->freq + direito->freq, esquerdo, direito);
-        insereNoFila(novoNoFila(soma), &fil);
-    }
     return criaSubArvore(&f);
 }
 
@@ -143,6 +143,7 @@ void excluirArvore(noArvore *no)
         free(no);
     }
 }
+
 bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
 {
     if (!(no->esq || no->dir) && no->c == c)
@@ -172,30 +173,33 @@ bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
         return codEncontrado;
     }
 }
+
 void descompactar()
 {
     FILE *arqComp;
     FILE *arqDesc;
     char nomeArqComp[20];
     char nomeArqDesc[20];
-    unsigned lBytes[256] = {0};
+    unsigned char lBytes[256] = {0};
     unsigned tamanho;
     unsigned posicao = 0;
     unsigned char aux = 0;
 
     printf("Digite o nome do arquivo a ser descompactado: \n");
     scanf("%s", nomeArqComp);
+    arqComp = fopen(nomeArqComp, "rb");
 
     if (arqComp == NULL)
         printf("Arquivo não encontrado!");
 
     printf("Digite o nome do arquivo que guardará a compactação: \n");
     scanf("%s", nomeArqDesc);
+    arqDesc = fopen(nomeArqDesc, "wb");
 
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fread(lBytes, sizeof(unsigned char), 256, arqComp);
     noArvore *arvore = fazerArvore(*lBytes);
 
     fread(&tamanho, 1, sizeof(tamanho), arqComp);
@@ -237,6 +241,7 @@ void compactar()
 
     printf("Digite o nome do arquivo a ser compactado: \n");
     scanf("%s", nomeArqParaComp);
+
     arqParaComp = fopen(nomeArqParaComp, "rb");
 
     if (arqParaComp == NULL)
@@ -244,6 +249,7 @@ void compactar()
 
     printf("Digite o nome do arquivo que guardará a compactacao: \n");
     scanf("%s", nomeArqComp);
+
     arqComp = fopen(nomeArqComp, "wb");
 
     if (arqComp == NULL)
@@ -272,7 +278,7 @@ void compactar()
 
             if (tamanho % 8 == 0)
             {
-                fwrite(&aux, 1, 1, arqParaComp);
+                fwrite(&aux, 1, 1, arqComp);
                 aux = 0;
             }
         }
@@ -288,13 +294,10 @@ void compactar()
     fseek(arqParaComp, 0L, SEEK_END);
     double tamanhoParaComp = ftell(arqParaComp);
 
-    printf("\nArquivo de entrada (descompactado): %s (%g bytes)\nArquivo de saida (compactado): %s (%g bytes)", nomeArqParaComp, tamanhoParaComp / 1000, nomeArqComp, tamanhoComp / 1000);
-
-    excluirArvore(arvore);
+    //excluirArvore(arvore);
 
     fclose(arqParaComp);
     fclose(arqComp);
-
 }
 
 int escolherOpcao()
