@@ -242,7 +242,7 @@ void compactar()
     if (arqParaComp == NULL)
         printf("Arquivo não encontrado!");
 
-    printf("Digite o nome do arquivo que guardará a compactação: \n");
+    printf("Digite o nome do arquivo que guardará a compactacao: \n");
     scanf("%s", nomeArqComp);
     arqComp = fopen(nomeArqComp, "wb");
 
@@ -296,6 +296,7 @@ void compactar()
     fclose(arqComp);
 
 }
+
 int escolherOpcao()
 {
     printf("O que deseja fazer? \n");
