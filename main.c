@@ -261,7 +261,14 @@ void compactar()
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    obterFreqByte(arqParaComp, lBytes);
+    //obterFreqByte(arqParaComp, lBytes);
+
+    unsigned char carac;
+
+    while (fread(&c, 1, 1, arqParaComp))
+        lBytes[(unsigned char)carac]++;
+
+    fseek(arqParaComp, 0, SEEK_SET);
 
     noArvore *arvore = fazerArvore(lBytes);
 
