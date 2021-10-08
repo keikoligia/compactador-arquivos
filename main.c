@@ -57,7 +57,11 @@ int gerarBit(FILE *arq, int pos, unsigned char *aux)
         fread(aux, 1, 1, arq);
     }
 
-    return !!((*aux) & (1 << (pos % 8)));
+    int result = (*aux) & (1 << (pos % 8)); 
+
+    if(result != 0) return 1;
+    else
+        return 0;
 }
 
 void insereNoFila(noFila *n, fila *f)
@@ -95,7 +99,7 @@ void obterFreqByte(FILE *arq, unsigned int *fila)
     while (fread(&c, 1, 1, arq))
         fila[(unsigned char)c]++;
 
-    rewind(arq);
+    fseek(arq, 0, SEEK_SET);
 }
 
 noArvore *criaSubArvore(fila *fla)
@@ -196,21 +200,25 @@ void descompactar()
     scanf("%s", nomeArqDesc);
     arqDesc = fopen(nomeArqDesc, "wb");
 
-    if (arqComp == NULL)
+    if (arqDesc == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
     fread(lBytes, sizeof(unsigned char), 256, arqComp);
-    noArvore *arvore = fazerArvore(*lBytes);
+    noArvore *arvore = fazerArvore(lBytes);
 
-    fread(&tamanho, 1, sizeof(tamanho), arqComp);
-
-    while (posicao < tamanho)
+    while (fread(&tamanho, sizeof(unsigned int), 1, arqComp))
     {
         noArvore *noAtual = arvore;
 
+        //enquanto o nó nao for folha
         while (noAtual->esq || noAtual->dir)
-            noAtual = gerarBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
-
+        {
+            noAtual = gerarBit(arqComp, posicao++, &aux);
+                if(!noAtual)
+                    noAtual->dir;
+                else
+                    noAtual->esq;
+        }
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
 
@@ -219,9 +227,7 @@ void descompactar()
 
     fseek(arqDesc, 0L, SEEK_END);
     double tamanhoDesc = ftell(arqDesc);
-
-    printf("Arquivo de entrada: %s (%g bytes)\nArquivo de saida: %s (%g bytes)", nomeArqComp, tamanhoComp / 1000, nomeArqDesc, tamanhoDesc/ 1000);
-
+    
     excluirArvore(arvore);
 
     fclose(arqComp);
