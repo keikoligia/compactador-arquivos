@@ -184,12 +184,10 @@ void descompactar()
     FILE *arqDesc;
     char nomeArqComp[20];
     char nomeArqDesc[20];
-    unsigned char lBytes[256] = {0};
-    unsigned tamanho;
+    unsigned lBytes[256] = {0};
     unsigned posicao = 0;
     unsigned char aux = 0;
-    unsigned char c;
-
+    
     printf("Digite o nome do arquivo a ser descompactado: \n");
     scanf("%s", nomeArqComp);
     arqComp = fopen(nomeArqComp, "rb");
@@ -204,26 +202,25 @@ void descompactar()
     if (arqDesc == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(unsigned char), arqComp);
+    fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
 
     noArvore *arvore = fazerArvore(lBytes);
 
-    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
-    fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
+    unsigned tamanho;
+    fread(&tamanho, 1, sizeof(tamanho), arqComp);
+    //fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    //fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
 
-    while (fread(&c, 1, 1, arqDesc) >= 1)
+
+
+    while (posicao < tamanho)
     {
         noArvore *noAtual = arvore;
 
         //enquanto o nó nao for folha
         while (noAtual->esq || noAtual->dir)
-        {
-            noAtual = gerarBit(arqComp, posicao++, &aux);
-                if(!noAtual)
-                    noAtual->dir;
-                else
-                    noAtual->esq;
-        }
+            noAtual = gerarBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
+
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
 
