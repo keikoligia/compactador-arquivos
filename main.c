@@ -187,7 +187,7 @@ void descompactar()
     unsigned lBytes[256] = {0};
     unsigned posicao = 0;
     unsigned char aux = 0;
-    
+
     printf("Digite o nome do arquivo a ser descompactado: \n");
     scanf("%s", nomeArqComp);
     arqComp = fopen(nomeArqComp, "rb");
@@ -202,16 +202,12 @@ void descompactar()
     if (arqDesc == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fread(lBytes, 256, sizeof(unsigned int), arqComp);
 
     noArvore *arvore = fazerArvore(lBytes);
 
     unsigned tamanho;
     fread(&tamanho, 1, sizeof(tamanho), arqComp);
-    //fread(lBytes, 256, sizeof(lBytes[0]), arqComp);
-    //fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
-
-
 
     while (posicao < tamanho)
     {
@@ -219,16 +215,17 @@ void descompactar()
 
         //enquanto o nó nao for folha
         while (noAtual->esq || noAtual->dir)
-            noAtual = gerarBit(arqComp, posicao++, &aux) ? noAtual->dir : noAtual->esq;
+            if(gerarBit(arqComp, posicao++, &aux))
+                noAtual = noAtual->dir;
+            else
+                noAtual = noAtual->esq;
 
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
 
-    fseek(arqComp, 0L, SEEK_END);
-    double tamanhoComp = ftell(arqComp);
+    fseek(arqComp, 0L, SEEK_END); double tamanhoComp = ftell(arqComp);
 
-    fseek(arqDesc, 0L, SEEK_END);
-    double tamanhoDesc = ftell(arqDesc);
+    fseek(arqDesc, 0L, SEEK_END); double tamanhoDesc = ftell(arqDesc);
     
     excluirArvore(arvore);
 
@@ -263,8 +260,6 @@ void compactar()
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    //obterFreqByte(arqParaComp, lBytes);
-
     unsigned char carac;
 
     while (fread(&c, 1, 1, arqParaComp))
@@ -274,12 +269,12 @@ void compactar()
 
     noArvore *arvore = fazerArvore(lBytes);
 
-    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fwrite(lBytes, 256, sizeof(unsigned int), arqComp);
     fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
 
     while (fread(&c, 1, 1, arqParaComp) >= 1)
     {
-        char buffer[1024] = {0};
+        char buffer[1024] = 0;
 
         buscaCodigoByte(arvore, c, buffer, 0);
 
@@ -309,7 +304,7 @@ void compactar()
     fseek(arqParaComp, 0L, SEEK_END);
     double tamanhoParaComp = ftell(arqParaComp);
 
-    //excluirArvore(arvore);
+    excluirArvore(arvore);
 
     fclose(arqParaComp);
     fclose(arqComp);
