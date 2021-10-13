@@ -57,7 +57,7 @@ int gerarBit(FILE *arq, int pos, unsigned char *aux)
         fread(aux, 1, 1, arq);
     }
 
-    int result = (*aux) & (1 << (pos % 8)); 
+    int result = ((*aux) & (1 << (pos % 8))); 
 
     if(result != 0) return 1;
     else
@@ -188,6 +188,7 @@ void descompactar()
     unsigned tamanho;
     unsigned posicao = 0;
     unsigned char aux = 0;
+    unsigned char c;
 
     printf("Digite o nome do arquivo a ser descompactado: \n");
     scanf("%s", nomeArqComp);
@@ -203,10 +204,14 @@ void descompactar()
     if (arqDesc == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, sizeof(unsigned char), 256, arqComp);
+    fread(lBytes, 256, sizeof(unsigned char), arqComp);
+
     noArvore *arvore = fazerArvore(lBytes);
 
-    while (fread(&tamanho, sizeof(unsigned int), 1, arqComp))
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
+    fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
+
+    while (fread(&c, 1, 1, arqDesc) >= 1)
     {
         noArvore *noAtual = arvore;
 
