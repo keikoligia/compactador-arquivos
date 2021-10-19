@@ -138,16 +138,6 @@ noArvore *fazerArvore(unsigned *fla)
     return criaSubArvore(&f);
 }
 
-void excluirArvore(noArvore *no)
-{
-    while(!no)
-    {
-        noArvore *esquerda = no->esq;
-        noArvore *direita = no->dir;
-        free(no);
-    }
-}
-
 bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
 {
     if (!(no->esq || no->dir) && no->c == c)
@@ -215,10 +205,12 @@ void descompactar()
 
         //enquanto o nó nao for folha
         while (noAtual->esq || noAtual->dir)
+        {
             if(gerarBit(arqComp, posicao++, &aux))
                 noAtual = noAtual->dir;
             else
                 noAtual = noAtual->esq;
+        }
 
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
@@ -227,15 +219,13 @@ void descompactar()
 
     fseek(arqDesc, 0L, SEEK_END); double tamanhoDesc = ftell(arqDesc);
     
-    excluirArvore(arvore);
-
     fclose(arqComp);
     fclose(arqDesc);
 }
 
 void compactar()
 {
-    FILE *arqParaComp;
+     FILE *arqParaComp;
     FILE *arqComp;
     char nomeArqParaComp[20];
     char nomeArqComp[20];
@@ -260,21 +250,16 @@ void compactar()
     if (arqComp == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    unsigned char carac;
-
-    while (fread(&c, 1, 1, arqParaComp))
-        lBytes[(unsigned char)carac]++;
-
-    fseek(arqParaComp, 0, SEEK_SET);
+    obterFreqByte(arqParaComp, lBytes);
 
     noArvore *arvore = fazerArvore(lBytes);
 
-    fwrite(lBytes, 256, sizeof(unsigned int), arqComp);
+    fwrite(lBytes, 256, sizeof(lBytes[0]), arqComp);
     fseek(arqComp, sizeof(unsigned int), SEEK_CUR);
 
     while (fread(&c, 1, 1, arqParaComp) >= 1)
     {
-        char buffer[1024] = 0;
+        char buffer[1024] = {0};
 
         buscaCodigoByte(arvore, c, buffer, 0);
 
@@ -304,7 +289,7 @@ void compactar()
     fseek(arqParaComp, 0L, SEEK_END);
     double tamanhoParaComp = ftell(arqParaComp);
 
-    excluirArvore(arvore);
+    //excluirArvore(arvore);
 
     fclose(arqParaComp);
     fclose(arqComp);
