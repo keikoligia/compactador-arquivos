@@ -12,17 +12,17 @@ typedef struct noArvore
     struct noArvore *dir;
 } noArvore;
 
-typedef struct noFila
+typedef struct noListaLigada
 {
     noArvore *no;
-    struct noFila *prox;
-} noFila;
+    struct noListaLigada *prox;
+} noListaLigada;
 
-typedef struct fila
+typedef struct lista
 {
-    noFila *inicio;
+    noListaLigada *inicio;
     int qtd;
-} fila;
+} lista;
 
 noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
 {
@@ -38,9 +38,9 @@ noArvore *novoNoArv(unsigned char c, int freq, noArvore *esq, noArvore *dir)
     return novo;
 }
 
-noFila *novoNoFila(noArvore *noArv)
+noListaLigada *novoNoLista(noArvore *noArv)
 {
-    noFila *novo;
+    noListaLigada *novo;
     if ((novo = malloc(sizeof(*novo))) == NULL) 
         return NULL;
 
@@ -64,20 +64,20 @@ int gerarBit(FILE *arq, int pos, unsigned char *aux)
         return 0;
 }
 
-void insereNoFila(noFila *n, fila *f)
+void insereNoFila(noListaLigada *n, lista *l)
 {
-    if (!f->inicio)
-        f->inicio = n;
+    if (!l->inicio)
+        l->inicio = n;
 
-    else if (n->no->freq < f->inicio->no->freq)
+    else if (n->no->freq < l->inicio->no->freq)
     {
-        n->prox = f->inicio;
-        f->inicio = n;
+        n->prox = l->inicio;
+        l->inicio = n;
     }
     else
     {
-        noFila *aux = f->inicio->prox;
-        noFila *aux2 = f->inicio;
+        noListaLigada *aux = l->inicio->prox;
+        noListaLigada *aux2 = l->inicio;
 
         while (aux && aux->no->freq <= n->no->freq)
         {
@@ -89,53 +89,53 @@ void insereNoFila(noFila *n, fila *f)
         n->prox = aux;
     }
 
-    f->qtd++;
+    l->qtd++;
 }
 
-void obterFreqByte(FILE *arq, unsigned int *fila)
+void obterFreqByte(FILE *arq, unsigned int *lista)
 {
     unsigned char c;
 
     while (fread(&c, 1, 1, arq))
-        fila[(unsigned char)c]++;
+        lista[(unsigned char)c]++;
 
     fseek(arq, 0, SEEK_SET);
 }
 
-noArvore *criaSubArvore(fila *fla)
+noArvore *criaSubArvore(lista *list)
 {
-    noFila *noFila = fla->inicio;
-    noArvore *noArv = noFila->no;
+    noListaLigada *noListaLigada = list->inicio;
+    noArvore *noArv = noListaLigada->no;
 
-    fla->inicio = noFila->prox;
+    list->inicio = noListaLigada->prox;
 
-    free(noFila);
-    noFila = NULL;
+    free(noListaLigada);
+    noListaLigada = NULL;
 
-    fla->qtd--;
+    list->qtd--;
 
     return noArv;
 }
 
-noArvore *fazerArvore(unsigned *fla)
+noArvore *fazerArvore(unsigned *list)
 {
-    fila f = {NULL, 0};
+    lista l = {NULL, 0};
 
     for (int i = 0; i < 256; i++)
-        if (fla[i])
-            insereNoFila(novoNoFila(novoNoArv(i, fla[i], NULL, NULL)), &f);
+        if (list[i])
+            insereNoFila(novoNoLista(novoNoArv(i, list[i], NULL, NULL)), &l);
 
-    while (f.qtd > 1)
+    while (l.qtd > 1)
     {
-        noArvore *noEsq = criaSubArvore(&f);
-        noArvore *noDir = criaSubArvore(&f);
+        noArvore *noEsq = criaSubArvore(&l);
+        noArvore *noDir = criaSubArvore(&l);
 
         noArvore *soma = novoNoArv('#', noEsq->freq + noDir->freq, noEsq, noDir);
 
-        insereNoFila(novoNoFila(soma), &f);
+        insereNoFila(novoNoLista(soma), &l);
     }
 
-    return criaSubArvore(&f);
+    return criaSubArvore(&l);
 }
 
 bool buscaCodigoByte(noArvore *no, unsigned char c, char *buffer, int tam)
@@ -192,13 +192,16 @@ void descompactar()
     if (arqDesc == NULL)
         printf("Por favor digite corretamente o nome do arquivo!");
 
-    fread(lBytes, 256, sizeof(unsigned int), arqComp);
+    fread(lBytes, sizeof(unsigned int), 256,  arqComp);
 
     noArvore *arvore = fazerArvore(lBytes);
 
     unsigned tamanho;
-    fread(&tamanho, 1, sizeof(tamanho), arqComp);
 
+    fread(&tamanho, sizeof(tamanho), 1, arqComp);
+    
+    //guarda, tamanho em bytes da unidade a ser lida, total, arquivo
+    
     while (posicao < tamanho)
     {
         noArvore *noAtual = arvore;
@@ -214,10 +217,6 @@ void descompactar()
 
         fwrite(&(noAtual->c), 1, 1, arqDesc);
     }
-
-    fseek(arqComp, 0L, SEEK_END); double tamanhoComp = ftell(arqComp);
-
-    fseek(arqDesc, 0L, SEEK_END); double tamanhoDesc = ftell(arqDesc);
     
     fclose(arqComp);
     fclose(arqDesc);
@@ -282,14 +281,6 @@ void compactar()
     fwrite(&aux, 1, 1, arqComp);
     fseek(arqComp, 256 * sizeof(unsigned int), SEEK_SET);
     fwrite(&tamanho, 1, sizeof(unsigned), arqComp);
-
-    fseek(arqComp, 0L, SEEK_END);
-    double tamanhoComp = ftell(arqComp);
-
-    fseek(arqParaComp, 0L, SEEK_END);
-    double tamanhoParaComp = ftell(arqParaComp);
-
-    //excluirArvore(arvore);
 
     fclose(arqParaComp);
     fclose(arqComp);
